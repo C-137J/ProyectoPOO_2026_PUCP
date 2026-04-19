@@ -5,7 +5,7 @@
 
 ---
 
-## 🚀 Características Principales
+## Características Principales
 
 El sistema resuelve las siguientes Historias de Usuario clave:
 * [cite_start]**Gestión Clínica (CRUD):** Registro de cuidadores y administración estructurada de datos de pacientes (tipo de sangre, contactos de emergencia)[cite: 619, 620].
@@ -33,7 +33,7 @@ El sistema resuelve las siguientes Historias de Usuario clave:
 
 ---
 
-## 📦 Modelo de Dominio (Capa de Clases)
+## Modelo de Dominio (Capa de Clases)
 
 [cite_start]El proyecto implementa el paradigma Orientado a Objetos con 11 clases base[cite: 628]:
 
@@ -51,7 +51,7 @@ El sistema resuelve las siguientes Historias de Usuario clave:
 
 ---
 
-## 👥 Equipo de Desarrollo
+## Equipo de Desarrollo
 
 * [cite_start]**Javier:** Programación e integración de JNOX HEALTH (Arduino, I2C para BMI160, Vistas en LVGL v9.4)[cite: 605].
 * [cite_start]**Anthony:** Creación de la solución en Visual Studio e implementación del código C++/CLI aplicando encapsulamiento, herencia y polimorfismo[cite: 607].
