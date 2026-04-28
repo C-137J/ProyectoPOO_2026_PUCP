@@ -1,10 +1,14 @@
 <div align="center">
 
 <img src="https://img.shields.io/badge/C%2B%2B%2FCLI-.NET%20Framework-blue?style=for-the-badge&logo=cplusplus&logoColor=white"/>
+
 <img src="https://img.shields.io/badge/ESP32--S3-Arduino-red?style=for-the-badge&logo=arduino&logoColor=white"/>
+
 <img src="https://img.shields.io/badge/BLE-Bluetooth%20Low%20Energy-blueviolet?style=for-the-badge&logo=bluetooth&logoColor=white"/>
+
 <img src="https://img.shields.io/badge/LVGL-v9.4-orange?style=for-the-badge"/>
-<img src="https://img.shields.io/badge/Estado-Sprint%201%20Completado-success?style=for-the-badge"/>
+
+<img src="https://img.shields.io/badge/Estado-Sprint%202%20Completado-success?style=for-the-badge"/>
 
 # 🩺 Sistema Integrado de Asistencia y Gestión de Salud
 
@@ -18,7 +22,7 @@
 
 ## 📋 Descripción del Proyecto
 
-Este proyecto consiste en el desarrollo de un **sistema de escritorio en C++/CLI** que actúa como central de monitoreo y gestión para adultos mayores, integrándose vía **Bluetooth Low Energy (BLE)** con el smartwatch **JNOX**, dispositivo basado en el microcontrolador **ESP32-S3**.
+Este proyecto consiste en el desarrollo de un **sistema de escritorio** que actúa como central de monitoreo y gestión para adultos mayores, integrándose vía **Bluetooth** con el smartwatch **JNOX**, dispositivo basado en el microcontrolador **ESP32-S3**.
 
 El sistema permite a familiares y cuidadores:
 - 👤 Administrar perfiles clínicos de pacientes
@@ -30,8 +34,34 @@ El sistema permite a familiares y cuidadores:
 
 ## 🏗️ Arquitectura del Sistema
 
+### Arquitectura en Capas (Entregable 2)
+
+El software de escritorio fue reestructurado bajo el **patrón de arquitectura en capas**, compuesto por cuatro niveles:
+
 ```
-┌─────────────────────────────────┐        BLE (JSON)        ┌─────────────────────────────┐
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                        CAPA DE PRESENTACIÓN (GUI)                            │
+│   Windows Forms: Login, Mantenimientos CRUD, Monitoreo, Historial Clínico    │
+├──────────────────────────────────────────────────────────────────────────────┤
+│                        CAPA DE CONTROLADOR (Controller)                      │
+│   UsuarioController · PacienteController · ContactoController                │
+│   EventoController · DispositivoController                                   │
+├──────────────────────────────────────────────────────────────────────────────┤
+│                        CAPA DE PERSISTENCIA (Persistence)                    │
+│   UsuarioAccesoDatos · PacienteAccesoDatos · ContactoAccesoDatos             │
+│   EventoAccesoDatos · DispositivoAccesoDatos                                 │
+│   Archivos: usuarios.txt · pacientes.txt · contactos.txt · eventos.txt       │
+├──────────────────────────────────────────────────────────────────────────────┤
+│                        CAPA DE MODELO (Model)                                │
+│   Usuario · Cuidador · Medico · Paciente · ContactoEmergencia                │
+│   DispositivoJNOX · EventoSalud · Recordatorio · AlertaCaida · GestorBLE     │
+└──────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Integración con Hardware
+
+```
+┌─────────────────────────────────┐        BLE (JSON)         ┌─────────────────────────────┐
 │   Aplicación de Escritorio      │ ◄───────────────────────► │     Smartwatch JNOX         │
 │        (C++/CLI)                │                           │     (ESP32-S3 + LVGL)       │
 │                                 │                           │                             │
@@ -44,43 +74,75 @@ El sistema permite a familiares y cuidadores:
 
 ---
 
-## 📐 Diagrama de Clases — Modelo de Dominio
+## 📐 Diagrama de Clases — Modelo Completo
 
-El modelo está compuesto por **10 clases** organizadas en dos jerarquías de herencia:
+El sistema completo está compuesto por **20 clases** organizadas en 3 capas (Model, Persistence, Controller):
 
-### Jerarquía de Usuarios
+### Capa Model — Jerarquía de Usuarios
 ```
 Usuario (base)
 ├── Cuidador
 └── Médico
 ```
 
-### Jerarquía de Eventos de Salud
+### Capa Model — Jerarquía de Eventos de Salud
 ```
 EventoSalud (base)
 ├── Recordatorio
 └── AlertaCaída
 ```
 
-### Clases Independientes
+### Capa Model — Clases Independientes
 ```
 Paciente · ContactoEmergencia · DispositivoJNOX · GestorBLE
 ```
 
-### Resumen de Clases
+### Capa Persistence — Acceso a Datos
+```
+UsuarioAccesoDatos · PacienteAccesoDatos · ContactoAccesoDatos
+EventoAccesoDatos · DispositivoAccesoDatos
+```
+
+### Capa Controller — Controladores
+```
+UsuarioController · PacienteController · ContactoController
+EventoController · DispositivoController
+```
+
+### Resumen de Clases del Modelo
 
 | Clase | Tipo | Atributos principales | Métodos destacados |
 |---|---|---|---|
 | `Usuario` | Clase base | `Id`, `Nombre`, `Edad`, `Telefono`, `UsuarioLogin`, `Contrasena` | constructor |
 | `Cuidador` | Hereda de Usuario | `Turno`, `PacientesAsignados` | constructor |
 | `Médico` | Hereda de Usuario | `Especialidad`, `CentroDeSalud`, `PacientesAsignados` | `GenerarRecomendaciones()` |
-| `Paciente` | Independiente | `IDPaciente`, `TipoSangre`, `SeguroMedico`, `Dispositivo`, `HistorialMedico` | `addContactoEmergencia()`, `showPacienteInfo()` |
-| `ContactoEmergencia` | Independiente | `IDCE`, `NombreCompleto`, `Parentesco`, `Telefono` | `MostrarContactoEmergencia()` |
+| `Paciente` | Independiente | `IDPaciente`, `NombrePaciente`, `TipoSangre`, `SeguroMedico`, `RecomendacionesMedicas (List)`, `ContactosEmergencia`, `HistorialMedico` | `addRecomendacion()`, `addContactoEmergencia()`, `addHistorial()`, `showPacienteInfo()` |
+| `ContactoEmergencia` | Independiente | `IDCE`, `IDPacienteAsociado`, `NombreCompleto`, `Parentesco`, `Telefono` | `MostrarContactoEmergencia()` |
 | `DispositivoJNOX` | Independiente | `DireccionMAC`, `NivelBateria`, `EstadoConexion`, `UmbralLibre`, `UmbralImpacto` | `setConfigCaida()`, `getNivelBat()` |
-| `EventoSalud` | Clase base eventos | `IdEvento`, `FechaHora`, `Estado` | `setEstado()`, `getEstado()` |
+| `EventoSalud` | Clase base eventos | `IdEvento`, `IDPacienteAsociado`, `FechaHora`, `Estado` | `setEstado()`, `getEstado()` |
 | `Recordatorio` | Hereda de EventoSalud | `MensajeTexto`, `Categoria`, `Repetir`, `IntervaloMinutos` | `setIntervalo()` |
-| `AlertaCaída` | Hereda de EventoSalud | `MagnitudImpacto`, `ConfirmacionReloj` | `CaidaDetectada()`, `getMagnitudCaida()` |
+| `AlertaCaída` | Hereda de EventoSalud | `MagnitudImpacto`, `ConfirmacionReloj` | `caidaDetectada()`, `getMagnitudCaida()` |
 | `GestorBLE` | Independiente | `EstaConectado`, `MacConectada` | `ConectarReloj()`, `SerializarEventoSalud()` |
+
+### Resumen de Clases de Persistencia
+
+| Clase | Archivo de datos | Métodos CRUD | Característica especial |
+|---|---|---|---|
+| `UsuarioAccesoDatos` | `usuarios.txt` | Add, QueryAll, QueryById, Update, Delete | Serialización polimórfica Cuidador/Médico |
+| `PacienteAccesoDatos` | `pacientes.txt` | Add, QueryAll, QueryById, Update, Delete | Recomendaciones serializadas con separador `\|`, vinculación con DispositivoJNOX por MAC |
+| `ContactoAccesoDatos` | `contactos.txt` | Add, QueryAll, QueryByPaciente, Delete | Filtrado por IDPacienteAsociado |
+| `EventoAccesoDatos` | `eventos.txt` | Add, QueryAll, QueryByPaciente, Delete | Serialización polimórfica Recordatorio/AlertaCaida |
+| `DispositivoAccesoDatos` | `dispositivos.txt` | Add, QueryAll, QueryByMAC, Update, Delete | Clave primaria por DireccionMAC |
+
+### Resumen de Clases Controller
+
+| Clase | Métodos proxy | Métodos de negocio |
+|---|---|---|
+| `UsuarioController` | CRUD + GuardarDatos/CargarDatos | `ValidarLogin()` — autenticación de usuarios |
+| `PacienteController` | CRUD + GuardarDatos/CargarDatos | — |
+| `ContactoController` | CRUD + GuardarDatos/CargarDatos | — |
+| `EventoController` | CRUD + GuardarDatos/CargarDatos | — |
+| `DispositivoController` | CRUD + GuardarDatos/CargarDatos | — |
 
 ---
 
@@ -109,10 +171,18 @@ Paciente · ContactoEmergencia · DispositivoJNOX · GestorBLE
 - [x] Configuración del repositorio en GitHub y tablero de seguimiento en Trello
 - [x] Redacción del Catálogo de Requisitos e Historias de Usuario
 
+### Sprint 2 — ✅ Completado
+
+- [x] Reestructuración del proyecto bajo el patrón de arquitectura en capas (Model, Persistence, Controller, GUI)
+- [x] Modificación de clases del modelo para soportar persistencia (nuevos atributos de vinculación entre entidades)
+- [x] Implementación de 5 clases de acceso a datos (Persistence) con operaciones CRUD y persistencia en archivos `.txt`
+- [x] Implementación de 5 clases de control (Controller) como intermediarios entre GUI y Persistence
+- [x] Desarrollo de interfaces gráficas: `frmLogin`, `JnoxMainForm` (MDI), `frmMantenimientoUsuario`, `frmMantenimientoPaciente`, `frmMantenimientoDispositivo`
+- [x] Desarrollo de prototipos transaccionales: `frmMonitoreoAlertas` y `frmHistorialClinico`
+- [x] Actualización del Diagrama de Clases en StarUML con las 20 clases del sistema
+
 ### Pendiente (Sprints futuros)
 
-- [ ] Construcción de formularios GUI (Windows Forms): Login, Dashboard, CRUD de pacientes
-- [ ] Implementación de persistencia de datos para Paciente e HistorialMedico
 - [ ] Integración de `Windows.Devices.Bluetooth` en `GestorBLE` para emparejamiento BLE
 - [ ] Programación de vistas en JNOX con LVGL para notificaciones al usuario
 - [ ] Driver I2C para el chip BMI160 (detección de caídas en el reloj)
@@ -127,6 +197,7 @@ Paciente · ContactoEmergencia · DispositivoJNOX · GestorBLE
 |---|---|
 | Aplicación de escritorio | C++/CLI (.NET Framework) — Visual Studio |
 | Interfaz de usuario | Windows Forms |
+| Persistencia de datos | Archivos de texto plano (.txt) con System::IO |
 | Comunicación inalámbrica | Bluetooth Low Energy (BLE) |
 | Protocolo de datos | JSON |
 | Firmware del reloj | Arduino (ESP32-S3) |
@@ -139,26 +210,65 @@ Paciente · ContactoEmergencia · DispositivoJNOX · GestorBLE
 
 ## 👥 Equipo
 
-| Integrante | Código | Responsabilidad Sprint 1 |
-|---|---|---|
-| Javier Armando Bonilla Flores | 20234901 | Configuración entorno JNOX HEALTH (Arduino + LVGL v9.4) |
-| Esthefany Hualparuca Sedano| 20236286 | Diseño del Diagrama de Clases en StarUML |
-| Anthony Aquiles William Tufiño Ugarte | 20226010 | Programación de las 10 clases en C++/CLI |
-| Piero Elguera Quichcas | 20236454 | GitHub, Trello y redacción del Catálogo de Requisitos |
+| Integrante | Código | Responsabilidad Sprint 1 | Responsabilidad Sprint 2 |
+|---|---|---|---|
+| Javier Armando Bonilla Flores | 20234901 | Configuración entorno JNOX HEALTH (Arduino + LVGL v9.4) | Arquitectura en capas, migración Model, modificaciones al modelo, frmMonitoreoAlertas |
+| Esthefany Hualparuca Sedano | 20236286 | Diseño del Diagrama de Clases en StarUML | Actualización del Diagrama de Clases (20 clases), frmMantenimientoPaciente, ContactoAccesoDatos/Controller |
+| Anthony Aquiles William Tufiño Ugarte | 20226010 | Programación de las 10 clases en C++/CLI | UsuarioAccesoDatos, PacienteAccesoDatos, UsuarioController, PacienteController, frmLogin, frmMantenimientoUsuario, frmMantenimientoDispositivo |
+| Piero Elguera Quichcas | 20236454 | GitHub, Trello y redacción del Catálogo de Requisitos | EventoAccesoDatos, DispositivoAccesoDatos, EventoController, DispositivoController, frmHistorialClinico, JnoxMainForm, Trello Sprint 2 |
 
 ---
 
 ## 📁 Estructura del Repositorio
 
 ```
-ProyectoPOO_2026_PUCP/
-├── ProyectoPOO/
-│   ├── pch.h
-│   ├── PROYECTO_POO.cpp        ← 10 clases del modelo de dominio
-│   └── ProyectoPOO.sln         ← Solución de Visual Studio
-├── JNOX_Firmware/              ← Código Arduino (ESP32-S3 + LVGL)
-├── docs/
-│   └── Entregable_1_Sistema_Salud_FINAL.docx
+JNOX_MODO_HEALTH/
+├── SOFTWARE_PC/
+│   └── PROYECTO_POO/
+│       ├── pch.h / pch.cpp
+│       ├── PROYECTO_POO.cpp           ← Punto de entrada principal
+│       ├── PROYECTO_POO.slnx          ← Solución de Visual Studio
+│       │
+│       ├── ── Model ──────────────────
+│       ├── Usuario.h / .cpp
+│       ├── Cuidador.h / .cpp
+│       ├── Medico.h / .cpp
+│       ├── Paciente.h / .cpp
+│       ├── ContactoEmergencia.h / .cpp
+│       ├── DispositivoJNOX.h / .cpp
+│       ├── EventoSalud.h / .cpp
+│       ├── Recordatorio.h / .cpp
+│       ├── AlertaCaida.h / .cpp
+│       ├── GestorBLE.h / .cpp
+│       │
+│       ├── ── Persistence ────────────
+│       ├── UsuarioAccesoDatos.h / .cpp
+│       ├── PacienteAccesoDatos.h / .cpp
+│       ├── ContactoAccesoDatos.h / .cpp
+│       ├── EventoAccesoDatos.h / .cpp
+│       ├── DispositivoAccesoDatos.h / .cpp
+│       │
+│       ├── ── Controller ─────────────
+│       ├── UsuarioController.h / .cpp
+│       ├── PacienteController.h / .cpp
+│       ├── ContactoController.h / .cpp
+│       ├── EventoController.h / .cpp
+│       ├── DispositivoController.h / .cpp
+│       │
+│       └── ── Datos persistidos ──────
+│           ├── usuarios.txt
+│           ├── pacientes.txt
+│           ├── contactos.txt
+│           ├── eventos.txt
+│           └── dispositivos.txt
+│
+├── ENTREGABLES/
+│   ├── ENTREGABLE 1/
+│   └── ENTREGABLE 2/
+│       └── Entregable_2_FINAL.docx
+│
+├── Diagrama de clases/                ← Archivos StarUML (.mdj)
+├── *.ino                              ← Firmware JNOX (ESP32-S3 + LVGL)
 └── README.md
 ```
 
@@ -172,9 +282,11 @@ ProyectoPOO_2026_PUCP/
    ```bash
    git clone https://github.com/C-137J/ProyectoPOO_2026_PUCP.git
    ```
-2. Abrir `ProyectoPOO.sln` en **Visual Studio 2022** (o superior)
+2. Abrir `PROYECTO_POO.slnx` en **Visual Studio 2022** (o superior)
 3. Seleccionar configuración `Debug | x64`
 4. Compilar y ejecutar (`F5`)
+
+> **Nota:** Los archivos de datos (`.txt`) se generan automáticamente en la carpeta de ejecución al cerrar la aplicación. Al reabrirla, los datos se cargan desde dichos archivos.
 
 ### Firmware JNOX (ESP32-S3)
 
@@ -188,7 +300,8 @@ ProyectoPOO_2026_PUCP/
 
 ## 📄 Documentación
 
-- 📑 [Entregable 1 — Sprint 1 (Word)](./docs/Entregable_1_Sistema_Salud_FINAL.docx)
+- 📑 [Entregable 1 — Sprint 1 (Word)](./ENTREGABLES/ENTREGABLE%201/)
+- 📑 [Entregable 2 — Sprint 2 (Word)](./ENTREGABLES/ENTREGABLE%202/Entregable_2_FINAL.docx)
 - 📋 Tablero Trello: *https://trello.com/b/Uoays2LN/proyecto-poo*
 
 ---
